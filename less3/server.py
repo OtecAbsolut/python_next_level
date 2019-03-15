@@ -18,16 +18,13 @@ import json
 from less3.client import create_message
 import time
 
-# подгружаем конфиг с ip адресом и портом (localhost, 7777)
-with open('config.json', 'r') as file:
-    config = json.load(file)
 
-ip = config['address']
-port = config['port']
-print('Сервер запущен и слушает порт:', port)
+IP = '0.0.0.0'
+PORT = 7777
+print('Сервер запущен и слушает порт:', PORT)
 
 sock = socket.socket()
-sock.bind(("0.0.0.0", port))
+sock.bind((IP, PORT))
 sock.listen(5)
 
 error_answer = {
@@ -58,9 +55,9 @@ while True:
         }
         send_msg = json.dumps(answer_data)
         client.send(send_msg.encode())
+
         while True:
             second_data = client.recv(2048)
-
             try:
                 second_msg = json.loads(second_data)
                 event = second_msg['event']
