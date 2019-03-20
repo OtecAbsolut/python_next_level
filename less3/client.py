@@ -3,11 +3,11 @@ import json
 import time
 import random
 
-with open('config.json', 'r') as file:
-    config = json.load(file)
+# with open('config.json', 'r') as file:
+#     config = json.load(file)
 
-ip = config['address']
-port = config['port']
+IP = 'localhost'
+PORT = 7777
 
 # Шаблон сообщения начала диалога
 start = {
@@ -31,11 +31,14 @@ def create_message(data_dict):
     return msg_byte
 
 
-if __name__ == '__main__':
-
+def start_connect(count):
     # Открытие сокета и отправка сообщения
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((ip, port))
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((IP, PORT))
+    except ConnectionRefusedError:
+        return 'Сервер не отвечает'
+
     sock.send(create_message(start))
 
     # ожидаем ответ от сервера
@@ -47,7 +50,7 @@ if __name__ == '__main__':
         print(f'***Получено сообщение от сервера***\n'
               f'Статус: {msg["status"]}\n'
               f'Сообщение: {msg["answer"]}')
-        for i in range(6):
+        for i in range(count):
             # Отправка второго сообщения
             random_message = [message, fail_message][random.randint(0, 1)]  # Выбираем случайное сообщение
             print(f'Отправляем сообщение => {random_message}')
@@ -60,11 +63,9 @@ if __name__ == '__main__':
                 print('Не дождались сообщения')
                 continue
 
-
             answer = json.loads(data_answer)
             status = answer["status"]
             msg_client = answer['answer']
-
 
             if status == 200:
                 print(f'***Получено сообщение от сервера***\n'
@@ -82,3 +83,8 @@ if __name__ == '__main__':
               f'Сообщение: {msg["answer"]}')
     sock.close()
     time.sleep(1)
+    return 'До свидание'
+
+
+if __name__ == '__main__':
+    start_connect(6)
