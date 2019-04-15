@@ -19,7 +19,7 @@ import time
 from protocol import validate_request, make_response, make_400, make_404
 import logging
 from routes import resolve
-
+from select import select
 
 IP = '0.0.0.0'
 PORT = 7777
@@ -41,67 +41,85 @@ logger.setLevel(logging.DEBUG)
 sock = socket.socket()
 sock.bind((IP, PORT))
 sock.listen(5)
+sock.settimeout(0)
 
 logger.debug(f'Сервер запущен и слушает порт:{PORT}')
 # error_answer = {
 #     'code': 400,
 #     'answer': 'Не верный формат запроса'
 # }
+
+connections = []
+requests = []
 try:
     while True:
-        client, address = sock.accept()
-        logger.debug(f'Установленно соединение с => {address}')
-        data = client.recv(2048)
-
         try:
-            request = json.loads(data)
-            event = request['event']
-            # name = msg['name_client']
-            logger.debug(f'Получено сообщение:\n{request}')
+            client, address = sock.accept()
+            logger.debug(f'Установленно соединение с => {address}')
+            connections.append(client)
+        except BlockingIOError:
+            pass
 
-        except Exception as error:
-            request, event = None, None
-            response = make_400(data.decode('utf-8'))
-            logger.debug(f'Ошибочка => {error}')
+        rlist, wlist, xlist = select(connections, connections, [], 0)
 
-        if validate_request(request):
-            logger.debug(request.get('event'))
-            controller = resolve(request.get('event'))
-            if controller:
-                try:
-                    response = controller(request)
-                    response_string = json.dumps(response)
-                    client.send(response_string.encode('utf-8'))
-                    logger.debug(f'Отправка сообщения: {response_string}')
-                    if event == 'start':
-                        while True:
-                            second_data = client.recv(2048)
-                            request = json.loads(second_data)
-                            logger.debug(f'Получено сообщение: {request}')
-                            if validate_request(request):
-                                controller = resolve(request.get('event'))
-                                if controller:
-                                    response = controller(request)
-                                    logger.debug(response)
-                                else:
-                                    response = make_404(request)
-                            else:
-                                response = make_404(request)
-                            response_string = json.dumps(response)
-                            logger.debug(f'Отправка сообщения: {response_string}')
-                            client.send(response_string.encode('utf-8'))
-                except Exception:
-                    response = make_response(
-                        request, 500,
-                        'Internal server error.'
-                    )
-            else:
-                response = make_404(request)
-        else:
-            response = make_400(request)
+        for client in rlist:
+
+            data = client.recv(1024)
+
+            try:
+                request = json.loads(data)
+                event = request['event']
+                # name = msg['name_client']
+                logger.debug(f'Получено сообщение:\n{request}')
+                requests.append(request)
+            except Exception as error:
+                request, event = None, None
+                requests.append(request)
+                response = make_400(data.decode('utf-8'))
+                logger.debug(f'Ошибочка => {error}')
 
 
-        client.close()
+        if requests:
+            for request in requests:
+                for client in wlist:
+                    if validate_request(request):
+                        logger.debug(request.get('event'))
+                        controller = resolve(request.get('event'))
+                        if controller:
+                            try:
+                                response = controller(request)
+                                response_string = json.dumps(response)
+                                client.send(response_string.encode('utf-8'))
+                                logger.debug(f'Отправка сообщения: {response_string}')
+                                if event == 'start':
+                                    while True:
+                                        second_data = client.recv(2048)
+                                        request = json.loads(second_data)
+                                        logger.debug(f'Получено сообщение: {request}')
+                                        if validate_request(request):
+                                            controller = resolve(request.get('event'))
+                                            if controller:
+                                                response = controller(request)
+                                                logger.debug(response)
+                                            else:
+                                                response = make_404(request)
+                                        else:
+                                            response = make_404(request)
+                                        response_string = json.dumps(response)
+                                        logger.debug(f'Отправка сообщения: {response_string}')
+                                        client.send(response_string.encode('utf-8'))
+                            except Exception:
+                                response = make_response(
+                                    request, 500,
+                                    'Internal server error.'
+                                )
+                        else:
+                            response = make_404(request)
+                    else:
+                        response = make_400(request)
+
+
+                    client.close()
         # if event == 'start':
         #     answer = f'{name}, добро пожаловать в наш сервис'
         #     answer_data = {

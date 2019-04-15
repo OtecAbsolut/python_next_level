@@ -33,7 +33,6 @@ def create_message(data_dict):
     msg_byte = msg.encode()
     return msg_byte
 
-
 def start_connect():
     # Открытие сокета и отправка сообщения
     try:
@@ -42,8 +41,8 @@ def start_connect():
     except ConnectionRefusedError:
         return 'Сервер не отвечает'
 
-    start['name_client'] = input('Введите имя')
-    start['event'] = input('Введите событие')
+    start['name_client'] = input('Введите имя ')
+    start['event'] = input('Введите событие ')
     sock.send(create_message(start))
 
     # ожидаем ответ от сервера
@@ -57,9 +56,9 @@ def start_connect():
                      f'Сообщение: {msg["data"]}')
             # Отправка второго сообщения
         while True:
-            message['name_client'] = start['name_client']
-            message['event'] = input('Введите событие')
-            message['text'] = input('Введите сообщение')
+            message['name_client'] = start['name']
+            message['event'] = input('Введите событие ')
+            message['text'] = input('Введите сообщение ')
 
             random_message = [message, fail_message][random.randint(0, 1)]  # Выбираем случайное сообщение
             logger.debug(f'Отправляем сообщение => {random_message}')

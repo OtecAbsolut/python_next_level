@@ -45,11 +45,11 @@ def start_connect(count):
     data = sock.recv(1042)
     msg = json.loads(data)
 
-    if msg['status'] == 200:
+    if msg['code'] == 200:
         print('Соединение установленно!')
         print(f'***Получено сообщение от сервера***\n'
-              f'Статус: {msg["status"]}\n'
-              f'Сообщение: {msg["answer"]}')
+              f'Статус: {msg["code"]}\n'
+              f'Сообщение: {msg["data"]}')
         for i in range(count):
             # Отправка второго сообщения
             random_message = [message, fail_message][random.randint(0, 1)]  # Выбираем случайное сообщение
@@ -64,8 +64,8 @@ def start_connect(count):
                 continue
 
             answer = json.loads(data_answer)
-            status = answer["status"]
-            msg_client = answer['answer']
+            status = answer["code"]
+            msg_client = answer['data']
 
             if status == 200:
                 print(f'***Получено сообщение от сервера***\n'
