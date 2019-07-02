@@ -93,11 +93,16 @@ SELECT товар,  цена FROM Table WHERE (товар, дата) in
 
 '''
 
+import os
 
 
+# for string in os.environ['PYTHONPATH'].split(os.pathsep):
+#     print(string)
 
+import sys
 
-
+a = open('/dev/tty').readline()[:-1]
+print(a)
 
 
 
