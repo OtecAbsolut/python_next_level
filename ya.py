@@ -93,30 +93,44 @@ SELECT товар,  цена FROM Table WHERE (товар, дата) in
 
 '''
 
+def full_name(first: str, last: str) -> str:
+    return f'{first.title()} {last.title()}'
+
+full_name('сергей', 'новожилов')
+
+from datetime import datetime
+
+def decorator(func):
+    def wrapper(*args, **kwargs):
+        start = datetime.now()
+        print(f'{start}: стартовала функция {func.__name__}')
+        result = func(*args, **kwargs)
+        finish = datetime.now()
+        print(f'{finish}: закончила работу {func.__name__}')
+        print(f'Время выполнения {finish - start}')
+        return result
+
+    return wrapper
+
+
+@decorator
+def test_func():
+    return 'Результат работы тестовой функции'
+
+#
+# print(test_func())
+# print('\n')
+# a = lambda x: x ** 2
+# print((decorator(lambda x: x ** 2))(3))
+
+from subprocess import Popen, PIPE
+import sys
 import os
 
+pipe = Popen(f'python {os.getcwd()}/reader.py', stdin=PIPE, stdout=PIPE, shell=True)
+pipe.stdin.write(b'kykyshka\n')
 
-# for string in os.environ['PYTHONPATH'].split(os.pathsep):
-#     print(string)
-
-import sys
-
-a = open('/dev/tty').readline()[:-1]
-print(a)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+pipe.stdin.close()
+output = pipe.stdout.read()
+pipe.wait()
+print(output)
