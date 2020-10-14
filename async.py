@@ -1,3 +1,7 @@
+"""
+https://devman.org/encyclopedia/async_python/coroutine_bomb/
+"""
+
 import time
 
 
